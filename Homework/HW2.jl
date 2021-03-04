@@ -101,7 +101,12 @@ Let's create a vector `v` of random numbers of length `n=100`.
 """
 
 # ╔═╡ 7fcd6230-ee09-11ea-314f-a542d00d582e
-n = 60
+md"""
+n = 100
+"""
+
+# ╔═╡ 6af86630-7c1a-11eb-20ba-bb27b5b6558c
+@bind n Slider(1:100)
 
 # ╔═╡ 7fdb34dc-ee09-11ea-366b-ffe10d1aa845
 v = rand(n)
@@ -136,8 +141,7 @@ A better solution is to use the *closest* value that is inside the vector. Effec
 
 # ╔═╡ 802bec56-ee09-11ea-043e-51cf1db02a34
 function extend(v::AbstractVector, i)
-	
-	return missing
+	return v[clamp(i,1,length(v))] #thank you clamp()
 end
 
 # ╔═╡ b7f3994c-ee1b-11ea-211a-d144db8eafc2
@@ -167,8 +171,8 @@ md"""
 
 # ╔═╡ 5fdc5d0d-a52c-476e-b3b5-3b6364b706e4
 function mean(v)
-	
-	return missing
+	ans = sum(v) / length(v)
+	return ans
 end
 
 # ╔═╡ e84c9cc2-e6e1-46f1-bf4e-9605da5e6f4a
@@ -179,30 +183,11 @@ md"""
 Return a vector of the same size as `v`.
 """
 
-# ╔═╡ 807e5662-ee09-11ea-3005-21fdcc36b023
-function box_blur(v::AbstractArray, l)
-	
-	return missing
-end
+# ╔═╡ b2d7fcc0-7c1c-11eb-2ec9-93ddfc866b85
+@bind l_box Slider(1:30)
 
-# ╔═╡ 4f08ebe8-b781-4a32-a218-5ecd8338561d
-colored_line(box_blur(example_vector, 1))
-
-# ╔═╡ 808deca8-ee09-11ea-0ee3-1586fa1ce282
-let
-	try
-		test_v = rand(n)
-		original = copy(test_v)
-		box_blur(test_v, 5)
-		if test_v != original
-			md"""
-			!!! danger "Oopsie!"
-			    It looks like your function _modifies_ `v`. Can you write it without doing so? Maybe you can use `copy`.
-			"""
-		end
-	catch
-	end
-end
+# ╔═╡ a9f55c10-7c1c-11eb-1f37-79e464b69ed2
+colored_line(example_vector)
 
 # ╔═╡ 809f5330-ee09-11ea-0e5b-415044b6ac1f
 md"""
@@ -235,10 +220,13 @@ Again, we need to take care about what happens if $v_{i -m }$ falls off the end 
    You will either need to do the necessary manipulation of indices by hand, or use the `OffsetArrays.jl` package.
 """
 
-# ╔═╡ 28e20950-ee0c-11ea-0e0a-b5f2e570b56e
-function convolve(v::AbstractVector, k)
-	
-	return missing
+# ╔═╡ e7b7afa0-7c8d-11eb-2bad-4db6af6484c8
+function my_sum(xs)
+	s = 0
+	for i in 1:length(xs)
+		s += xs[i]
+	end
+	return s
 end
 
 # ╔═╡ cf73f9f8-ee12-11ea-39ae-0107e9107ef5
@@ -252,9 +240,8 @@ md"""
 """
 
 # ╔═╡ 8a7d3cfd-6f19-43f0-ae16-d5a236f148e7
-function box_blur_kernel(l)
-	
-	return missing
+function box_blur_kernel(len)
+	return [1/len for i in 1:len]
 end
 
 # ╔═╡ a34d1ad8-3776-4bc4-93e5-72cfffc54f15
@@ -267,12 +254,6 @@ box_blur_kernel_test = box_blur_kernel(box_kernel_l)
 md"""
 Let's apply your kernel to our test vector `v` (first cell), and compare the result to our previous box blur function (second cell). The two should be identical.
 """
-
-# ╔═╡ bbe1a562-8d97-4112-a88a-c45c260f574d
-let
-	result = box_blur(v, box_kernel_l)
-	colored_line(result)
-end
 
 # ╔═╡ 03f91a22-1c3e-4c42-9d78-1ee36851a120
 md"""
@@ -373,6 +354,51 @@ else
 	colored_line([extend(example_vector, i) for i in -1:length(example_vector)+2])
 end
 
+# ╔═╡ 807e5662-ee09-11ea-3005-21fdcc36b023
+function box_blur(v::AbstractArray, l)
+	#for each index of v, grab mean of -l to l elements around it (clamped) and set that as output for same index
+	output = [mean([extend(v, j) for j in i-l:i+l]) for i in 1:length(v)]
+	return output
+end
+
+# ╔═╡ 4f08ebe8-b781-4a32-a218-5ecd8338561d
+colored_line(box_blur(example_vector, l_box))
+
+# ╔═╡ 808deca8-ee09-11ea-0ee3-1586fa1ce282
+let
+	try
+		test_v = rand(n)
+		original = copy(test_v)
+		box_blur(test_v, 5)
+		if test_v != original
+			md"""
+			!!! danger "Oopsie!"
+			    It looks like your function _modifies_ `v`. Can you write it without doing so? Maybe you can use `copy`.
+			"""
+		end
+	catch
+	end
+end
+
+# ╔═╡ bbe1a562-8d97-4112-a88a-c45c260f574d
+let
+	result = box_blur(v, box_kernel_l)
+	colored_line(result)
+end
+
+# ╔═╡ 28e20950-ee0c-11ea-0e0a-b5f2e570b56e
+function convolve(v::AbstractVector, k)
+	output = [0 for i in 1:length(v)] #create output vector of zeros
+	convert(Array{Float64,1}, output) #convert array to Float64
+	l = (length(k)-1)÷2 #length(k)=2l+1 ⟹ l = (length(k)-1)÷2
+	k_new = OffsetArray(k, -l:l) #set indices of k from -l to l
+	for i in 1:length(v) #iterate through indices of output
+		terms = [extend(v,i-m) * k_new[m] for m in -l:l]
+		output[i]=my_sum(terms) #set output[i] to equal vᵢ′defined above	
+	end
+	return output
+end
+
 # ╔═╡ 9afc4dca-ee16-11ea-354f-1d827aaa61d2
 md"_Let's test it!_"
 
@@ -432,9 +458,10 @@ end
 
 # ╔═╡ 93284f92-ee12-11ea-0342-833b1a30625c
 test_convolution = let
-	v = [1, 10, 100, 1000, 10000]
-	k = [1, 1, 0]
+	v = [1, 10, 100]
+	k = [0, 1, 1]
 	convolve(v, k)
+
 end
 
 # ╔═╡ 5eea882c-ee13-11ea-0d56-af81ecd30a4a
@@ -1042,6 +1069,7 @@ Gray.(with_sobel_edge_detect(sobel_camera_image))
 # ╟─80108d80-ee09-11ea-0368-31546eb0d3cc
 # ╠═7fcd6230-ee09-11ea-314f-a542d00d582e
 # ╠═7fdb34dc-ee09-11ea-366b-ffe10d1aa845
+# ╠═6af86630-7c1a-11eb-20ba-bb27b5b6558c
 # ╟─7fe9153e-ee09-11ea-15b3-6f24fcc20734
 # ╠═01070e28-ee0f-11ea-1928-a7919d452bdd
 # ╟─ff70782e-e8d2-4281-9b24-d45c925f55e2
@@ -1058,19 +1086,22 @@ Gray.(with_sobel_edge_detect(sobel_camera_image))
 # ╟─806e5766-ee0f-11ea-1efc-d753cd83d086
 # ╠═38da843a-ee0f-11ea-01df-bfa8b1317d36
 # ╟─9bde9f92-ee0f-11ea-27f8-ffef5fce2b3c
-# ╟─45c4da9a-ee0f-11ea-2c5b-1f6704559137
+# ╠═45c4da9a-ee0f-11ea-2c5b-1f6704559137
 # ╟─431ba330-0f72-416a-92e9-55f51ff3bcd1
 # ╠═5fdc5d0d-a52c-476e-b3b5-3b6364b706e4
 # ╟─e84c9cc2-e6e1-46f1-bf4e-9605da5e6f4a
 # ╠═807e5662-ee09-11ea-3005-21fdcc36b023
+# ╠═b2d7fcc0-7c1c-11eb-2ec9-93ddfc866b85
 # ╠═4f08ebe8-b781-4a32-a218-5ecd8338561d
+# ╠═a9f55c10-7c1c-11eb-1f37-79e464b69ed2
 # ╟─808deca8-ee09-11ea-0ee3-1586fa1ce282
 # ╟─809f5330-ee09-11ea-0e5b-415044b6ac1f
 # ╠═e555a7e6-f11a-43ac-8218-6d832f0ce251
-# ╠═302f0842-453f-47bd-a74c-7942d8c96485
-# ╠═7d80a1ea-a0a9-41b2-9cfe-a334717ab2f4
+# ╟─302f0842-453f-47bd-a74c-7942d8c96485
+# ╟─7d80a1ea-a0a9-41b2-9cfe-a334717ab2f4
 # ╟─ea435e58-ee11-11ea-3785-01af8dd72360
 # ╟─80ab64f4-ee09-11ea-29b4-498112ed0799
+# ╠═e7b7afa0-7c8d-11eb-2bad-4db6af6484c8
 # ╠═28e20950-ee0c-11ea-0e0a-b5f2e570b56e
 # ╟─32a07f1d-93cd-4bf3-bac1-91afa6bb88a6
 # ╟─5eea882c-ee13-11ea-0d56-af81ecd30a4a
