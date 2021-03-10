@@ -165,7 +165,7 @@ md"👉 Use `filter` to extract just the characters from our alphabet out of `me
 messy_sentence_1 = "#wow 2020 ¥500 (blingbling!)"
 
 # ╔═╡ 75694166-f998-11ea-0428-c96e1113e2a0
-cleaned_sentence_1 = missing
+cleaned_sentence_1 = filter(isinalphabet, messy_sentence_1)
 
 # ╔═╡ 05f0182c-f999-11ea-0a52-3d46c65a049e
 md"""
@@ -184,7 +184,7 @@ md"👉 Use the function `lowercase` to convert `messy_sentence_2` into a lower 
 messy_sentence_2 = "Awesome! 😍"
 
 # ╔═╡ d3a4820e-f998-11ea-2a5c-1f37e2a6dd0a
-cleaned_sentence_2 = missing
+cleaned_sentence_2 = filter(isinalphabet, map(lowercase, messy_sentence_2))
 
 # ╔═╡ aad659b8-f998-11ea-153e-3dae9514bfeb
 md"""
@@ -235,7 +235,7 @@ $(html"<br>")
 # ╔═╡ 4affa858-f92e-11ea-3ece-258897c37e51
 function clean(text)
 	
-	return missing
+	return filter(isinalphabet, map(lowercase, unaccent(text)))
 end
 
 # ╔═╡ e00d521a-f992-11ea-11e0-e9da8255b23b
@@ -281,7 +281,20 @@ $(html"<br>")
 """
 
 # ╔═╡ 92bf9fd2-f9a5-11ea-25c7-5966e44db6c6
-unused_letters = ['a', 'b', 'c'] # replace with your answer
+begin
+	indices = []
+	for (idx, val) in enumerate(sample_freqs) #iterate over sample freqs
+		if val == 0
+			push!(indices, idx) #push indices whose value = 0 to array
+		end
+	end
+	unused_letters = [alphabet[i] for i in indices]
+end
+
+# ╔═╡ fce208e0-810a-11eb-01bb-fd2d9ccb355e
+md"""
+bruh lmfao
+"""
 
 # ╔═╡ 01215e9a-f9a9-11ea-363b-67392741c8d4
 md"""
@@ -353,7 +366,7 @@ end
 md"""👉 What is the frequency of the combination `"th"`?"""
 
 # ╔═╡ 1b4c0c28-f9ab-11ea-03a6-69f69f7f90ed
-th_frequency = missing
+th_frequency = sample_freq_matrix[index_of_letter('t'), index_of_letter('h')]
 
 # ╔═╡ 1f94e0a2-f9ab-11ea-1347-7dd906ebb09d
 md"""👉 What about `"ht"`?"""
@@ -366,8 +379,19 @@ md"""
 👉 Write code to find which le**tt**ers appeared doubled in our sample.
 """
 
+# ╔═╡ f14104de-81a1-11eb-2a0d-0f01e289aeb1
+begin
+	repeat_idxs = []
+	for i in 1:27
+		if sample_freq_matrix[i,i] != 0
+			push!(repeat_idxs, i)
+		end
+	end
+	repeats = [alphabet[i] for i in repeat_idxs]
+end
+
 # ╔═╡ 65c92cac-f930-11ea-20b1-6b8f45b3f262
-double_letters = ['a', 'b', 'c'] # replace with your answer
+double_letters = repeats
 
 # ╔═╡ 4582ebf4-f930-11ea-03b2-bf4da1a8f8df
 md"""
@@ -376,8 +400,20 @@ md"""
 _You are free to do this partially by hand, partially using code, whatever is easiest!_
 """
 
+# ╔═╡ bc957a90-81a2-11eb-1404-0d60992771c4
+index_of_letter('w')
+
+# ╔═╡ c6787440-81a2-11eb-2710-d50cdd2621a7
+begin
+	w_freqs=[]
+	for i in 1:27
+		push!(w_freqs, sample_freq_matrix[23, i])
+	end
+	alphabet[findmax(w_freqs)[2]]
+end
+
 # ╔═╡ 7898b76a-f930-11ea-2b7e-8126ec2b8ffd
-most_likely_to_follow_w = 'x' # replace with your answer
+most_likely_to_follow_w = 'o' # replace with your answer
 
 # ╔═╡ 458cd100-f930-11ea-24b8-41a49f6596a0
 md"""
@@ -386,8 +422,17 @@ md"""
 _You are free to do this partially by hand, partially using code, whatever is easiest!_
 """
 
+# ╔═╡ 34fef680-81aa-11eb-24db-fff7659b2ca1
+begin
+	b4w_freqs=[]
+	for i in 1:27
+		push!(b4w_freqs, sample_freq_matrix[i, 23])
+	end
+	alphabet[findmax(b4w_freqs)[2]]
+end
+
 # ╔═╡ bc401bee-f931-11ea-09cc-c5efe2f11194
-most_likely_to_precede_w = 'x' # replace with your answer
+most_likely_to_precede_w = ' ' # replace with your answer
 
 # ╔═╡ 45c20988-f930-11ea-1d12-b782d2c01c11
 md"""
@@ -395,15 +440,17 @@ md"""
 """
 
 # ╔═╡ 58428158-84ac-44e4-9b38-b991728cd98a
-row_sums = missing
+row_sums = [sum(sample_freq_matrix[i,:]) for i in 1:27]
 
 # ╔═╡ 4a0314a6-7dc0-4ee9-842b-3f9bd4d61fb1
-col_sums = missing
+col_sums = [sum(sample_freq_matrix[:,i]) for i in 1:27]
 
 # ╔═╡ cc62929e-f9af-11ea-06b9-439ac08dcb52
 row_col_answer = md"""
 
-Blablabla
+The row sums show the total probability that any 2 consequetive characters start with a specific character.
+
+The column sums show the total probability that any 2 consequetive characters end with a specific character.
 """
 
 # ╔═╡ 2f8dedfc-fb98-11ea-23d7-2159bdb6a299
@@ -488,8 +535,8 @@ The only question left is: How do we compare two matrices? When two matrices are
 
 # ╔═╡ 13c89272-f934-11ea-07fe-91b5d56dedf8
 function matrix_distance(A, B)
-
-	return missing # do something with A .- B
+	diffs = A .- B
+	return sum(abs.(diffs)) # do something with A .- B #ok bro whatever you say
 end
 
 # ╔═╡ 7d60f056-f931-11ea-39ae-5fa18a955a77
@@ -1299,6 +1346,7 @@ bigbreak
 # ╠═92bf9fd2-f9a5-11ea-25c7-5966e44db6c6
 # ╟─95b81778-f9a5-11ea-3f51-019430bc8fa8
 # ╟─7df7ab82-f9ad-11ea-2243-21685d660d71
+# ╠═fce208e0-810a-11eb-01bb-fd2d9ccb355e
 # ╟─dcffd7d2-f9a6-11ea-2230-b1afaecfdd54
 # ╟─b3dad856-f9a7-11ea-1552-f7435f1cb605
 # ╟─01215e9a-f9a9-11ea-363b-67392741c8d4
@@ -1324,13 +1372,17 @@ bigbreak
 # ╠═41b2df7c-f931-11ea-112e-ede3b16f357a
 # ╟─489fe282-f931-11ea-3dcb-35d4f2ac8b40
 # ╟─1dd1e2f4-f930-11ea-312c-5ff9e109c7f6
+# ╠═f14104de-81a1-11eb-2a0d-0f01e289aeb1
 # ╠═65c92cac-f930-11ea-20b1-6b8f45b3f262
-# ╠═671525cc-f930-11ea-0e71-df9d4aae1c05
+# ╟─671525cc-f930-11ea-0e71-df9d4aae1c05
 # ╟─7711ecc5-9132-4223-8ed4-4d0417b5d5c1
 # ╟─4582ebf4-f930-11ea-03b2-bf4da1a8f8df
+# ╠═bc957a90-81a2-11eb-1404-0d60992771c4
+# ╠═c6787440-81a2-11eb-2710-d50cdd2621a7
 # ╠═7898b76a-f930-11ea-2b7e-8126ec2b8ffd
 # ╟─a5fbba46-f931-11ea-33e1-054be53d986c
 # ╟─458cd100-f930-11ea-24b8-41a49f6596a0
+# ╠═34fef680-81aa-11eb-24db-fff7659b2ca1
 # ╠═bc401bee-f931-11ea-09cc-c5efe2f11194
 # ╟─ba695f6a-f931-11ea-0fbb-c3ef1374270e
 # ╟─45c20988-f930-11ea-1d12-b782d2c01c11
