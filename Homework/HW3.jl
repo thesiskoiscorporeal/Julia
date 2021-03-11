@@ -645,9 +645,12 @@ ngrams([1, 2, 3, 42], 2) == bigrams([1, 2, 3, 42])
 """
 
 # ╔═╡ 7be98e04-fb6b-11ea-111d-51c48f39a4e9
-function ngrams(words, n)
+function ngrams(words, n) #this is a generalisation moment
+	starting_positions = 1:length(words)-(n-1)
 	
-	return missing
+	map(starting_positions) do i
+		words[i:i+n-1]
+	end
 end
 
 # ╔═╡ 052f822c-fb7b-11ea-382f-af4d6c2b4fdb
@@ -719,7 +722,13 @@ Dict(
 function word_counts(words::Vector)
 	counts = Dict()
 	
-	# your code here
+	for word in words
+		if !haskey(counts, word)
+			counts[word] = 1
+		else
+			counts[word] += 1
+		end
+	end
 	
 	return counts
 end
@@ -733,7 +742,7 @@ md"""
 """
 
 # ╔═╡ 953363dc-fb84-11ea-1128-ebdfaf5160ee
-emma_count = missing
+emma_count = word_counts(emma_words)["Emma"]
 
 # ╔═╡ 294b6f50-fb84-11ea-1382-03e9ab029a2d
 md"""
@@ -762,8 +771,16 @@ If the same n-gram occurs multiple times (e.g. "said Emma laughing"), then the l
 # ╔═╡ b726f824-fb5e-11ea-328e-03a30544037f
 function completion_cache(grams)
 	cache = Dict()
+	n = length(grams[1])
 	
-	# your code here
+	for gram in grams #iterate through ngrams in input
+		sans_last = gram[1:n-1] #first n-1 letters of current ngram
+		if !haskey(cache, sans_last)
+			cache[sans_last] = [gram[n]] #add n-1 gram to keys and set value
+		else
+			push!(cache[sans_last], gram[n]) #push completion to value array
+		end
+	end
 	
 	cache
 end
@@ -861,7 +878,7 @@ Enter your own text in the box below, and use that as training data to generate 
 @bind generate_demo_sample TextField((50,5), default=samples.English)
 
 # ╔═╡ 70169682-fb8c-11ea-27c0-2dad2ff3080f
-md"""Using $(@bind generate_sample_n_letters NumberField(1:5))grams for characters"""
+md"""Using $(@bind generate_sample_n_letters NumberField(1:10))grams for characters"""
 
 # ╔═╡ 402562b0-fb63-11ea-0769-375572cc47a8
 md"""Using $(@bind generate_sample_n_words NumberField(1:5))grams for words"""
@@ -872,9 +889,6 @@ md"""
 
 Uncomment the cell below to generate some Jane Austen text:
 """
-
-# ╔═╡ 49b69dc2-fb8f-11ea-39af-030b5c5053c3
-# generate(emma, 100; n=4) |> Quote
 
 # ╔═╡ cc07f576-fbf3-11ea-2c6f-0be63b9356fc
 if student.name == "Jazzy Doe"
@@ -927,6 +941,9 @@ generate(
 	n=generate_sample_n_words, 
 	use_words=true
 ) |> Quote
+
+# ╔═╡ 49b69dc2-fb8f-11ea-39af-030b5c5053c3
+generate(emma, 100; n=4) |> Quote
 
 # ╔═╡ ddef9c94-fb96-11ea-1f17-f173a4ff4d89
 function compimg(img, labels=[c*d for c in replace(alphabet, ' ' => "_"), d in replace(alphabet, ' ' => "_")])
@@ -1450,7 +1467,7 @@ bigbreak
 # ╟─d7b7a14a-fb90-11ea-3e2b-2fd8f379b4d8
 # ╟─1939dbea-fb63-11ea-0bc2-2d06b2d4b26c
 # ╟─70169682-fb8c-11ea-27c0-2dad2ff3080f
-# ╠═b5dff8b8-fb6c-11ea-10fc-37d2a9adae8c
+# ╟─b5dff8b8-fb6c-11ea-10fc-37d2a9adae8c
 # ╟─402562b0-fb63-11ea-0769-375572cc47a8
 # ╟─ee8c5808-fb5f-11ea-19a1-3d58217f34dc
 # ╟─2521bac8-fb8f-11ea-04a4-0b077d77529e
