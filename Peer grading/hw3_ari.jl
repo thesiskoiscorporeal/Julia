@@ -22,7 +22,6 @@ begin
 			Pkg.PackageSpec(name="Colors",version="0.12"),
 			Pkg.PackageSpec(name="PlutoUI",version="0.7"),
 			])
-
 	using Colors
 	using PlutoUI
 	using Compose
@@ -48,7 +47,7 @@ Feel free to ask questions!
 # ╔═╡ 33e43c7c-f381-11ea-3abc-c942327456b1
 # edit the code below to set your name and kerberos ID (i.e. email without @mit.edu)
 
-student = (name = "Jazzy Doe", kerberos_id = "jazz")
+student = (name = "Ari", kerberos_id = "jazz")
 
 # you might need to wait until all other cells in this notebook have completed running. 
 # scroll around the page to see what's up
@@ -184,7 +183,7 @@ md"👉 Use the function `lowercase` to convert `messy_sentence_2` into a lower 
 messy_sentence_2 = "Awesome! 😍"
 
 # ╔═╡ d3a4820e-f998-11ea-2a5c-1f37e2a6dd0a
-cleaned_sentence_2 = filter(isinalphabet, map(lowercase, messy_sentence_2))
+cleaned_sentence_2 = filter(isinalphabet, lowercase(messy_sentence_2))
 
 # ╔═╡ aad659b8-f998-11ea-153e-3dae9514bfeb
 md"""
@@ -234,8 +233,7 @@ $(html"<br>")
 
 # ╔═╡ 4affa858-f92e-11ea-3ece-258897c37e51
 function clean(text)
-	
-	return filter(isinalphabet, map(lowercase, unaccent(text)))
+	filter(isinalphabet, lowercase(unaccent(text)))
 end
 
 # ╔═╡ e00d521a-f992-11ea-11e0-e9da8255b23b
@@ -281,20 +279,7 @@ $(html"<br>")
 """
 
 # ╔═╡ 92bf9fd2-f9a5-11ea-25c7-5966e44db6c6
-begin
-	indices = []
-	for (idx, val) in enumerate(sample_freqs) #iterate over sample freqs
-		if val == 0
-			push!(indices, idx) #push indices whose value = 0 to array
-		end
-	end
-	unused_letters = [alphabet[i] for i in indices]
-end
-
-# ╔═╡ fce208e0-810a-11eb-01bb-fd2d9ccb355e
-md"""
-bruh lmfao
-"""
+unused_letters = map(x -> alphabet[x], findall(iszero, sample_freqs))
 
 # ╔═╡ 01215e9a-f9a9-11ea-363b-67392741c8d4
 md"""
@@ -365,33 +350,39 @@ end
 # ╔═╡ e91c6fd8-f930-11ea-01ac-476bbde79079
 md"""👉 What is the frequency of the combination `"th"`?"""
 
+# ╔═╡ f4fbf614-8028-11eb-0a75-27a982ad4747
+function transition_frequency(a::Char, b::Char)
+	transition_frequencies(first_sample)[index_of_letter(a), index_of_letter(b)]
+end
+
 # ╔═╡ 1b4c0c28-f9ab-11ea-03a6-69f69f7f90ed
-th_frequency = sample_freq_matrix[index_of_letter('t'), index_of_letter('h')]
+th_frequency = transition_frequency('t', 'h')
 
 # ╔═╡ 1f94e0a2-f9ab-11ea-1347-7dd906ebb09d
 md"""👉 What about `"ht"`?"""
 
 # ╔═╡ 41b2df7c-f931-11ea-112e-ede3b16f357a
-ht_frequency = missing
+ht_frequency = transition_frequency('h', 't')
 
 # ╔═╡ 1dd1e2f4-f930-11ea-312c-5ff9e109c7f6
 md"""
 👉 Write code to find which le**tt**ers appeared doubled in our sample.
 """
 
-# ╔═╡ f14104de-81a1-11eb-2a0d-0f01e289aeb1
-begin
-	repeat_idxs = []
+# ╔═╡ e3664fe2-80f2-11eb-2363-9728c20c4b19
+function doubled_letters()
+	freq = transition_frequencies(first_sample)
+	res = Array{Char,1}()
 	for i in 1:27
-		if sample_freq_matrix[i,i] != 0
-			push!(repeat_idxs, i)
+		if freq[i,i]!=0.0
+			append!(res, alphabet[i])
 		end
 	end
-	repeats = [alphabet[i] for i in repeat_idxs]
+	res
 end
 
 # ╔═╡ 65c92cac-f930-11ea-20b1-6b8f45b3f262
-double_letters = repeats
+double_letters = doubled_letters()
 
 # ╔═╡ 4582ebf4-f930-11ea-03b2-bf4da1a8f8df
 md"""
@@ -400,20 +391,14 @@ md"""
 _You are free to do this partially by hand, partially using code, whatever is easiest!_
 """
 
-# ╔═╡ bc957a90-81a2-11eb-1404-0d60992771c4
-index_of_letter('w')
-
-# ╔═╡ c6787440-81a2-11eb-2710-d50cdd2621a7
-begin
-	w_freqs=[]
-	for i in 1:27
-		push!(w_freqs, sample_freq_matrix[23, i])
-	end
-	alphabet[findmax(w_freqs)[2]]
+# ╔═╡ 67993010-80f8-11eb-1b90-b7a84dff88f6
+function most_likely_to_follow(c)
+	freqs = transition_frequencies(first_sample)[index_of_letter(c),:]
+	alphabet[findmax(freqs)[2]]
 end
 
 # ╔═╡ 7898b76a-f930-11ea-2b7e-8126ec2b8ffd
-most_likely_to_follow_w = 'o' # replace with your answer
+most_likely_to_follow_w = most_likely_to_follow('w')
 
 # ╔═╡ 458cd100-f930-11ea-24b8-41a49f6596a0
 md"""
@@ -422,41 +407,34 @@ md"""
 _You are free to do this partially by hand, partially using code, whatever is easiest!_
 """
 
-# ╔═╡ 34fef680-81aa-11eb-24db-fff7659b2ca1
-begin
-	b4w_freqs=[]
-	for i in 1:27
-		push!(b4w_freqs, sample_freq_matrix[i, 23])
-	end
-	alphabet[findmax(b4w_freqs)[2]]
+# ╔═╡ d9fb59b6-80fc-11eb-0a76-b7ea3c66874d
+function most_likely_to_precede(c)
+	freqs = transition_frequencies(first_sample)[:,index_of_letter(c)]
+	alphabet[findmax(freqs)[2]]
 end
 
 # ╔═╡ bc401bee-f931-11ea-09cc-c5efe2f11194
-most_likely_to_precede_w = ' ' # replace with your answer
+most_likely_to_precede_w = most_likely_to_precede('w')
 
 # ╔═╡ 45c20988-f930-11ea-1d12-b782d2c01c11
 md"""
 👉 What is the sum of each row? What is the sum of each column? What is the sum of the matrix? How can we interpret these values?"
 """
 
+# ╔═╡ b3fd86f4-810f-11eb-02ef-41a23cc07b8e
+first_sample_transitions = transition_frequencies(first_sample);
+
 # ╔═╡ 58428158-84ac-44e4-9b38-b991728cd98a
-row_sums = [sum(sample_freq_matrix[i,:]) for i in 1:27]
+row_sums = [(alphabet[i], sum(first_sample_transitions[i,:])) for i in 1:27]
 
 # ╔═╡ 4a0314a6-7dc0-4ee9-842b-3f9bd4d61fb1
-col_sums = [sum(sample_freq_matrix[:,i]) for i in 1:27]
+col_sums = [(alphabet[i], sum(first_sample_transitions[:,i])) for i in 1:27]
 
 # ╔═╡ cc62929e-f9af-11ea-06b9-439ac08dcb52
 row_col_answer = md"""
 
-The row sums show the total probability that any 2 consequetive characters start with a specific character.
-
-The column sums show the total probability that any 2 consequetive characters end with a specific character.
-
-
-update: that just translates to
-
-"row sum shows the frequency of the letter in the first n-1 items of the text
-column sum shows the frequency of the letter in the last n-1 items of the text"
+Both show for each character its frequency in the input text.
+There's some difference due to shortness of the input text. I claim it will be reduced with a longer corpus.
 
 """
 
@@ -542,8 +520,7 @@ The only question left is: How do we compare two matrices? When two matrices are
 
 # ╔═╡ 13c89272-f934-11ea-07fe-91b5d56dedf8
 function matrix_distance(A, B)
-	diffs = A .- B
-	return sum(abs.(diffs)) # do something with A .- B #ok bro whatever you say
+	sum(abs.(A .- B))
 end
 
 # ╔═╡ 7d60f056-f931-11ea-39ae-5fa18a955a77
@@ -652,11 +629,11 @@ ngrams([1, 2, 3, 42], 2) == bigrams([1, 2, 3, 42])
 """
 
 # ╔═╡ 7be98e04-fb6b-11ea-111d-51c48f39a4e9
-function ngrams(words, n) #this is a generalisation moment
+function ngrams(words, n)
 	starting_positions = 1:length(words)-(n-1)
-	
+
 	map(starting_positions) do i
-		words[i:i+n-1]
+		words[i:i+(n-1)]
 	end
 end
 
@@ -729,11 +706,11 @@ Dict(
 function word_counts(words::Vector)
 	counts = Dict()
 	
-	for word in words
-		if !haskey(counts, word)
-			counts[word] = 1
+	for w in words
+		if haskey(counts, w)
+			counts[w] += 1
 		else
-			counts[word] += 1
+			counts[w] = 1
 		end
 	end
 	
@@ -778,15 +755,17 @@ If the same n-gram occurs multiple times (e.g. "said Emma laughing"), then the l
 # ╔═╡ b726f824-fb5e-11ea-328e-03a30544037f
 function completion_cache(grams)
 	cache = Dict()
-	n = length(grams[1])
 	
-	for gram in grams #iterate through ngrams in input
-		sans_last = gram[1:n-1] #first n-1 letters of current ngram
-		if !haskey(cache, sans_last)
-			cache[sans_last] = [gram[n]] #add n-1 gram to keys and set value
+	for g in grams
+		g₋₁ = g[1:end-1]
+		w = g[end]
+
+		if haskey(cache, g₋₁)
+			cache[g₋₁] = append!(cache[g₋₁], [w])
 		else
-			push!(cache[sans_last], gram[n]) #push completion to value array
+			cache[g₋₁] = [w]
 		end
+
 	end
 	
 	cache
@@ -885,7 +864,7 @@ Enter your own text in the box below, and use that as training data to generate 
 @bind generate_demo_sample TextField((50,5), default=samples.English)
 
 # ╔═╡ 70169682-fb8c-11ea-27c0-2dad2ff3080f
-md"""Using $(@bind generate_sample_n_letters NumberField(1:10))grams for characters"""
+md"""Using $(@bind generate_sample_n_letters NumberField(1:5))grams for characters"""
 
 # ╔═╡ 402562b0-fb63-11ea-0769-375572cc47a8
 md"""Using $(@bind generate_sample_n_words NumberField(1:5))grams for words"""
@@ -1370,15 +1349,14 @@ bigbreak
 # ╠═92bf9fd2-f9a5-11ea-25c7-5966e44db6c6
 # ╟─95b81778-f9a5-11ea-3f51-019430bc8fa8
 # ╟─7df7ab82-f9ad-11ea-2243-21685d660d71
-# ╠═fce208e0-810a-11eb-01bb-fd2d9ccb355e
 # ╟─dcffd7d2-f9a6-11ea-2230-b1afaecfdd54
-# ╟─b3dad856-f9a7-11ea-1552-f7435f1cb605
+# ╠═b3dad856-f9a7-11ea-1552-f7435f1cb605
 # ╟─01215e9a-f9a9-11ea-363b-67392741c8d4
-# ╟─be55507c-f9a7-11ea-189c-4ffe8377212e
+# ╠═be55507c-f9a7-11ea-189c-4ffe8377212e
 # ╟─8ae13cf0-f9a8-11ea-3919-a735c4ed9e7f
 # ╟─343d63c2-fb58-11ea-0cce-efe1afe070c2
-# ╟─b5b8dd18-f938-11ea-157b-53b145357fd1
-# ╟─0e872a6c-f937-11ea-125e-37958713a495
+# ╠═b5b8dd18-f938-11ea-157b-53b145357fd1
+# ╠═0e872a6c-f937-11ea-125e-37958713a495
 # ╟─77623f3e-f9a9-11ea-2f46-ff07bd27cd5f
 # ╠═fbb7c04e-f92d-11ea-0b81-0be20da242c8
 # ╠═80118bf8-f931-11ea-34f3-b7828113ffd8
@@ -1391,25 +1369,26 @@ bigbreak
 # ╠═6896fef8-f9af-11ea-0065-816a70ba9670
 # ╟─39152104-fc49-11ea-04dd-bb34e3600f2f
 # ╟─e91c6fd8-f930-11ea-01ac-476bbde79079
+# ╠═f4fbf614-8028-11eb-0a75-27a982ad4747
 # ╠═1b4c0c28-f9ab-11ea-03a6-69f69f7f90ed
 # ╟─1f94e0a2-f9ab-11ea-1347-7dd906ebb09d
 # ╠═41b2df7c-f931-11ea-112e-ede3b16f357a
 # ╟─489fe282-f931-11ea-3dcb-35d4f2ac8b40
 # ╟─1dd1e2f4-f930-11ea-312c-5ff9e109c7f6
-# ╠═f14104de-81a1-11eb-2a0d-0f01e289aeb1
+# ╠═e3664fe2-80f2-11eb-2363-9728c20c4b19
 # ╠═65c92cac-f930-11ea-20b1-6b8f45b3f262
 # ╟─671525cc-f930-11ea-0e71-df9d4aae1c05
 # ╟─7711ecc5-9132-4223-8ed4-4d0417b5d5c1
 # ╟─4582ebf4-f930-11ea-03b2-bf4da1a8f8df
-# ╠═bc957a90-81a2-11eb-1404-0d60992771c4
-# ╠═c6787440-81a2-11eb-2710-d50cdd2621a7
+# ╠═67993010-80f8-11eb-1b90-b7a84dff88f6
 # ╠═7898b76a-f930-11ea-2b7e-8126ec2b8ffd
 # ╟─a5fbba46-f931-11ea-33e1-054be53d986c
 # ╟─458cd100-f930-11ea-24b8-41a49f6596a0
-# ╠═34fef680-81aa-11eb-24db-fff7659b2ca1
+# ╠═d9fb59b6-80fc-11eb-0a76-b7ea3c66874d
 # ╠═bc401bee-f931-11ea-09cc-c5efe2f11194
 # ╟─ba695f6a-f931-11ea-0fbb-c3ef1374270e
 # ╟─45c20988-f930-11ea-1d12-b782d2c01c11
+# ╠═b3fd86f4-810f-11eb-02ef-41a23cc07b8e
 # ╠═58428158-84ac-44e4-9b38-b991728cd98a
 # ╠═4a0314a6-7dc0-4ee9-842b-3f9bd4d61fb1
 # ╠═cc62929e-f9af-11ea-06b9-439ac08dcb52
@@ -1438,7 +1417,7 @@ bigbreak
 # ╟─8c7606f0-fb93-11ea-0c9c-45364892cbb8
 # ╟─82e0df62-fb54-11ea-3fff-b16c87a7d45b
 # ╠═b7601048-fb57-11ea-0754-97dc4e0623a1
-# ╟─cc42de82-fb5a-11ea-3614-25ef961729ab
+# ╠═cc42de82-fb5a-11ea-3614-25ef961729ab
 # ╠═d66fe2b2-fb5a-11ea-280f-cfb12b8296ac
 # ╠═4ca8e04a-fb75-11ea-08cc-2fdef5b31944
 # ╟─6f613cd2-fb5b-11ea-1669-cbd355677649
@@ -1474,7 +1453,7 @@ bigbreak
 # ╟─d7b7a14a-fb90-11ea-3e2b-2fd8f379b4d8
 # ╟─1939dbea-fb63-11ea-0bc2-2d06b2d4b26c
 # ╟─70169682-fb8c-11ea-27c0-2dad2ff3080f
-# ╟─b5dff8b8-fb6c-11ea-10fc-37d2a9adae8c
+# ╠═b5dff8b8-fb6c-11ea-10fc-37d2a9adae8c
 # ╟─402562b0-fb63-11ea-0769-375572cc47a8
 # ╟─ee8c5808-fb5f-11ea-19a1-3d58217f34dc
 # ╟─2521bac8-fb8f-11ea-04a4-0b077d77529e
