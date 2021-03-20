@@ -489,7 +489,13 @@ md"""
 
 # ╔═╡ 6d993a5c-f373-11ea-0dde-c94e3bbd1552
 exhaustive_observation = md"""
-<your answer here>
+
+* This algorithm calls least\_energy() on the 3 pixels immediately connected to the starting pixel, each of which call least\_energy() on the 3 pixels connected to them, so on and so forth until the last row is reached. This results in least\_energy() being called on each pixel that can possibly part of a seam from the starting\_pixel. Hence, the energies of all possible paths are searched over.
+
+
+* O(3ⁿ) 
+
+
 """
 
 # ╔═╡ ea417c2a-f373-11ea-3bb0-b1b5754f2fac
@@ -526,8 +532,28 @@ You are expected to read and understand the [documentation on dictionaries](http
 function memoized_least_energy(energies, i, j, memory::Dict)
 	m, n = size(energies)
 	
-	# you should start by copying the code from 
-	# your (not-memoized) least_energies function.
+	if haskey(memory, (i,j)) #check if energy already exists in memory
+		return memory[i,j]
+	end
+
+	# base case, last row
+	if i == m
+	    return (energies[i,j], j)
+	end
+
+	# induction
+	bestindex = 0
+	bestenergy = 1
+	for col in clamp(j-1, 1, n):clamp(j+1, 1, n)
+		if memoized_least_energy(energies, i+1, col, memory)[1] < bestenergy
+			bestenergy = memoized_least_energy(energies, i+1, col, memory)[1]
+			bestindex = col
+			println(col)
+		end
+	end
+	
+	memory[i,j] = (energies[i,j] + bestenergy, bestindex, memory)
+	return memory[i,j]
 	
 end
 
