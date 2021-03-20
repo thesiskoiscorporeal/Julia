@@ -454,7 +454,18 @@ This will give you the method used in the lecture to perform [exhaustive search 
 function recursive_seam(energies, starting_pixel)
 	m, n = size(energies)
 	# Replace the following line with your code.
-	[rand(1:starting_pixel) for i=1:m]
+	
+	output = []
+	push!(output, starting_pixel)
+	col = starting_pixel
+	
+	for row in 1:m-1
+		push!(output, least_energy(energies, row, col)[2])
+		col = least_energy(energies, row, col)[2]
+	end
+	
+	return output
+	
 end
 
 # ╔═╡ f92ac3e4-fa70-4bcf-bc50-a36792a8baaa
@@ -464,6 +475,9 @@ We won't use this function to shrink our larger image, because it is too ineffic
 
 # ╔═╡ 7ac5eb8d-9dba-4700-8f3a-1e0b2addc740
 recursive_seam_test = recursive_seam(grant_example, 4)
+
+# ╔═╡ 42249ed2-894f-11eb-3079-03ce1fbabcef
+recursive_seam_test
 
 # ╔═╡ c572f6ce-f372-11ea-3c9a-e3a21384edca
 md"""
@@ -996,7 +1010,7 @@ bigbreak
 # ╟─9101d5a0-f371-11ea-1c04-f3f43b96ca4a
 # ╠═8ec27ef8-f320-11ea-2573-c97b7b908cb7
 # ╠═ad524df7-29e2-4f0d-ad72-8ecdd57e4f02
-# ╠═1add9afd-5ff5-451d-ad81-57b0e929dfe8
+# ╟─1add9afd-5ff5-451d-ad81-57b0e929dfe8
 # ╟─414dd91b-8d05-44f0-8bbd-b15981ce1210
 # ╟─447e54f8-d3db-4970-84ee-0708ab8a9244
 # ╠═8b8da8e7-d3b5-410e-b100-5538826c0fde
@@ -1011,7 +1025,8 @@ bigbreak
 # ╠═85033040-f372-11ea-2c31-bb3147de3c0d
 # ╟─f92ac3e4-fa70-4bcf-bc50-a36792a8baaa
 # ╠═7ac5eb8d-9dba-4700-8f3a-1e0b2addc740
-# ╠═9ff0ce41-327f-4bf0-958d-309cd0c0b6e5
+# ╠═42249ed2-894f-11eb-3079-03ce1fbabcef
+# ╟─9ff0ce41-327f-4bf0-958d-309cd0c0b6e5
 # ╟─c572f6ce-f372-11ea-3c9a-e3a21384edca
 # ╠═6d993a5c-f373-11ea-0dde-c94e3bbd1552
 # ╟─ea417c2a-f373-11ea-3bb0-b1b5754f2fac
