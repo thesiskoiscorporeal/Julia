@@ -18,12 +18,12 @@ begin
     import Pkg
     Pkg.activate(mktempdir())
     Pkg.add([
-        Pkg.PackageSpec(name="Images", version="0.23"),
-        Pkg.PackageSpec(name="ImageMagick", version="1"),
-        Pkg.PackageSpec(name="TestImages", version="1"),
-        Pkg.PackageSpec(name="ImageFiltering", version="0.6"),
-        Pkg.PackageSpec(name="PlutoUI", version="0.7"),
-        Pkg.PackageSpec(name="BenchmarkTools", version="0.6"),
+        Pkg.PackageSpec(name="Images"),
+        Pkg.PackageSpec(name="ImageMagick"),
+        Pkg.PackageSpec(name="TestImages"),
+        Pkg.PackageSpec(name="ImageFiltering"),
+        Pkg.PackageSpec(name="PlutoUI"),
+        Pkg.PackageSpec(name="BenchmarkTools"),
     ])
     using Images, TestImages, ImageFiltering, Statistics, PlutoUI, BenchmarkTools
 end
@@ -365,7 +365,7 @@ function least_energy(energies, i, j)
 	end
 
 	# induction
-	bestindex = 1 #index to go to
+	bestindex = 0 #index to go to
 	bestenergy = 1 #to track lowest energy of connected pixel
 	for col in clamp(j-1, 1, n):clamp(j+1, 1, n) #j-1:j+1 w/ edge handling
 		if least_energy(energies, i+1, col)[1] < bestenergy
@@ -527,12 +527,12 @@ You are expected to read and understand the [documentation on dictionaries](http
 """
 
 # ╔═╡ b1d09bc8-f320-11ea-26bb-0101c9a204e2
-
+md"""
 function memoized_least_energy(energies, i, j, memory::Dict)
 	m, n = size(energies)
 
 	if haskey(memory, (i,j)) #check if energy already exists in memory
-		return memory[(i,j)]
+		return memory[i,j]
 	end
 
 	# base case, last row
@@ -541,7 +541,7 @@ function memoized_least_energy(energies, i, j, memory::Dict)
 	end
 
 	# induction
-	bestindex = 1
+	bestindex = 0
 	bestenergy = 1
 	for col in clamp(j-1, 1, n):clamp(j+1, 1, n)
 		if memoized_least_energy(energies, i+1, col, memory)[1] < bestenergy
@@ -551,11 +551,11 @@ function memoized_least_energy(energies, i, j, memory::Dict)
 		end
 	end
 
-	memory[(i,j)] = (energies[i,j] + bestenergy, bestindex)
-	return (energies[i,j] + bestenergy, bestindex)
+	memory[(i,j)] = (energies[i,j] + bestenergy, bestindex, memory)
+	return (energies[i,j] + bestenergy, bestindex, memory)
 
 end
-
+"""
 # ╔═╡ 1947f304-fa2c-4019-8584-01ef44ef2859
 memoized_least_energy_test = memoized_least_energy(grant_example, 1, 4, Dict())
 
@@ -577,18 +577,11 @@ function memoized_recursive_seam(energies, starting_pixel)
 	memory = Dict{Tuple{Int,Int},Tuple{Float64,Int}}()
 
 	m, n = size(energies)
-	
-	output = []
-	push!(output, starting_pixel)
-	col = starting_pixel
 
-	for row in 1:m-1
-		push!(output, memoized_least_energy(energies, row, col, memory)[2])
-		col = memoized_least_energy(energies, row, col, memory)[2]
-	end
+	# Replace the following line with your code.
 
-	return output
-
+	# you should start by copying the code from
+	# your (not-memoized) recursive_seam function.
 end
 
 # ╔═╡ d941c199-ed77-47dd-8b5a-e34b864f9a79
@@ -626,9 +619,6 @@ function matrix_memoized_seam(energies, starting_pixel)
 	m, n = size(energies)
 
 	# Replace the following line with your code.
-	output = []
-	push!(output, starting_pixel)
-	
 	[starting_pixel for i=1:m]
 
 
@@ -657,17 +647,8 @@ function least_energy_matrix(energies)
 	result = copy(energies)
 	m,n = size(energies)
 
-	for row in m-1:-1:1 #iterate through rows, bottom up
-		
-		#edge cases #result[i,j] is energies[i,j] plus the lowest of the 3 below
-		result[row, 1] = energies[row, 1] + min([result[row+1, 1], result[row+1, 2]]...)
-		result[row, n] = energies[row, n] + min([result[row+1, n], result[row+1, n-1]]...)
-		
-		#iterate through cols 2 to n-1
-		for col in 2:n-1
-			result[row, col] = energies[row, col] + min([result[row+1, i] for i in col-1:col+1]...)
-		end
-	end
+	# your code here
+
 
 	return result
 end
@@ -677,9 +658,6 @@ img_brightness = brightness.(img);
 
 # ╔═╡ 51731519-1831-46a3-a599-d6fc2f7e4224
 le_test = least_energy_matrix(img_brightness)
-
-# ╔═╡ 371dbcb0-8a4e-11eb-1adc-6f4c6f67812d
-img_brightness
 
 # ╔═╡ e06d4e4a-146c-4dbd-b742-317f638a3bd8
 spooky(A::Matrix{<:Real}) = map(sqrt.(A ./ maximum(A))) do x
@@ -702,29 +680,9 @@ function seam_from_precomputed_least_energy(energies, starting_pixel::Int)
 	m, n = size(least_energies)
 
 	# Replace the following line with your code.
-	output = []
-	push!(output, starting_pixel) #push starting pixel to output
-	
-	col = starting_pixel
-	for row in 1:m-1
-		lookahead = energies[row+1, clamp(col, 2, n)-1:clamp(col,1,n-1)+1]
-		nextindex = clamp(col-2+argmin(lookahead), 1, n) #clamp for edge handling
-		push!(output, nextindex) #push nextindex to output
-		col = nextindex #move pointer to nextindex
-	end
-	
-	return output
-	
+	[starting_pixel for i=1:m]
+
 end
-
-# ╔═╡ 745f0df0-8a52-11eb-3ddf-c3d556434413
-spooky(grant_example)
-
-# ╔═╡ 87c63f80-8a52-11eb-1195-1d8a2e9efaa2
-least_energy_matrix(grant_example)
-
-# ╔═╡ 1b459b30-8a52-11eb-027c-c57767e0e648
-seam_from_precomputed_least_energy(least_energy_matrix(grant_example), 4)
 
 # ╔═╡ 51df0c98-f3c5-11ea-25b8-af41dc182bac
 begin
@@ -829,7 +787,7 @@ end
 
 # ╔═╡ 51e28596-f3c5-11ea-2237-2b72bbfaa001
 if shrink_bottomup
-	local n = min(80, size(img, 2))
+	local n = min(40, size(img, 2))
 	bottomup_carved = shrink_n(seam_from_precomputed_least_energy, img, n)
 	md"Shrink by: $(@bind bottomup_n Slider(1:n, show_value=true))"
 end
@@ -1122,15 +1080,11 @@ bigbreak
 # ╠═ff055726-f320-11ea-32f6-2bf38d7dd310
 # ╟─e0622780-f3b4-11ea-1f44-59fb9c5d2ebd
 # ╠═51731519-1831-46a3-a599-d6fc2f7e4224
-# ╠═371dbcb0-8a4e-11eb-1adc-6f4c6f67812d
 # ╠═99efaf6a-0109-4b16-89b8-f8149b6b69c2
 # ╠═d3e69cf6-61b1-42fc-9abd-42d1ae7d61b2
 # ╟─e06d4e4a-146c-4dbd-b742-317f638a3bd8
 # ╟─92e19f22-f37b-11ea-25f7-e321337e375e
 # ╠═795eb2c4-f37b-11ea-01e1-1dbac3c80c13
-# ╠═745f0df0-8a52-11eb-3ddf-c3d556434413
-# ╠═87c63f80-8a52-11eb-1195-1d8a2e9efaa2
-# ╠═1b459b30-8a52-11eb-027c-c57767e0e648
 # ╟─51df0c98-f3c5-11ea-25b8-af41dc182bac
 # ╟─51e28596-f3c5-11ea-2237-2b72bbfaa001
 # ╟─0a10acd8-f3c6-11ea-3e2f-7530a0af8c7f
@@ -1138,7 +1092,7 @@ bigbreak
 # ╟─0fbe2af6-f381-11ea-2f41-23cd1cf930d9
 # ╟─48089a00-f321-11ea-1479-e74ba71df067
 # ╟─6b4d6584-f3be-11ea-131d-e5bdefcc791b
-# ╠═437ba6ce-f37d-11ea-1010-5f6a6e282f9b
+# ╟─437ba6ce-f37d-11ea-1010-5f6a6e282f9b
 # ╟─ef88c388-f388-11ea-3828-ff4db4d1874e
 # ╟─ef26374a-f388-11ea-0b4e-67314a9a9094
 # ╟─6bdbcf4c-f321-11ea-0288-fb16ff1ec526
