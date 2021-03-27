@@ -4,6 +4,15 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ 8c8388cf-9891-423c-8db2-d40d870bb38e
 begin
 	using Pkg
@@ -227,7 +236,7 @@ function print_as_matrix(M::FirstRankOneMatrix)
 	
 	for i in 1:length(M.v)
 		for j in 1:length(M.w)
-			print(rpad(outerprod[i,j], 6))
+			print(rpad(outerprod[i,j], 6)) #right pad elements to a length of 6
 		end
 		print("\n")
 	end
@@ -272,10 +281,10 @@ In the cell above, we added a second ('outer') constructor that takes a single v
 """
 
 # ╔═╡ eb612772-8b06-44bb-a36a-827435cbb2ee
-
+new_table = RankOneMatrix(1:10, 1:12)
 
 # ╔═╡ d3e7c8d1-4b4a-47b6-9c96-150333078f42
-
+new_table_2 = RankOneMatrix(1:10)
 
 # ╔═╡ 3ed18ba0-850b-11eb-3e90-f188c54d9ce9
 md"""
@@ -285,13 +294,13 @@ md"""
 # ╔═╡ f2d8b45c-8501-11eb-1c6a-5f819c240d9d
 function Base.size(M::RankOneMatrix)
 	
-	return missing # Your code here
+	return (length(M.v), length(M.w)) # Your code here
 end
 
 # ╔═╡ ed72e880-8afa-11eb-3a4a-175a838188d9
 function Base.getindex(M::RankOneMatrix, i, j)
 	
-	return missing # Your code here
+	M.v[i] * M.w[j] # Your code here
 end
 
 # ╔═╡ 7b3fb0ef-9a9e-401c-8c09-e5615134a4ad
@@ -303,7 +312,7 @@ md"""
 """
 
 # ╔═╡ fc962c72-8501-11eb-2821-cbb7a52d5f61
-M = RankOneMatrix(1:10) # missing # Your code here
+M = RankOneMatrix(1:10) # Your code here
 
 # ╔═╡ 8f5c7c9c-850b-11eb-3d97-bf9c6b5d7d2e
 md"""
@@ -346,7 +355,7 @@ md"""
 # ╔═╡ ee58251a-8511-11eb-074c-5b1e27c4ebd4
 function matvec(M::RankOneMatrix, x)
 	
-	return missing # Your code here
+	(M.w ⋅ x) * M.v # Matrix multiplication of rank-1 matrix M=vwᵀ #much faster than 						default method
 end
 
 # ╔═╡ 4864e4d6-850c-11eb-210c-0318b8660a9a
@@ -391,7 +400,13 @@ md"""
 """
 
 # ╔═╡ f5a95dd8-850d-11eb-2aa7-2dcb1868577f
+table1 = RankOneMatrix(1.0:10.0)
 
+# ╔═╡ 9d3c0e90-8eac-11eb-2c46-01fb61ac2a49
+table2 = RankOneMatrix(0.0:0.1:0.9)
+
+# ╔═╡ 912e2920-8ead-11eb-2fa1-0d35671768b5
+RankTwoMatrix(table1, table2)
 
 # ╔═╡ dc714540-8afa-11eb-205b-7770074771c8
 md"""
@@ -401,14 +416,14 @@ md"""
 
 # ╔═╡ c784e02c-8502-11eb-3efa-7f4c45f4274c
 function Base.getindex(M::RankTwoMatrix, i, j)
-
-	return missing # Your code here
+	
+	getindex(M.A, i,j) + getindex(M.B, i,j)
 end
 
 # ╔═╡ 0bab818e-8503-11eb-02b3-178098599847
 function Base.size(M::RankTwoMatrix)
 	
-	return missing # Your code here
+	size(M.A)
 end
 
 # ╔═╡ aca709f0-8503-11eb-1144-1fc01cb85c39
@@ -424,7 +439,7 @@ We can go even further and make a general custom type `LowRankMatrix` for rank-$
 
 # ╔═╡ b6717812-8503-11eb-2729-39bfdc1fd2f9
 struct LowRankMatrix <: AbstractMatrix{Float64}
-	# Your code here
+	
 	Ms::Vector{RankOneMatrix}
 	rank::Int
 end
@@ -438,7 +453,7 @@ md"""
 # ╔═╡ c49e350e-8503-11eb-15de-7308dd03dc08
 function Base.getindex(M::LowRankMatrix, i, j)
 	
-	return missing # Your code here
+	sum([getindex(M.Ms[k], i,j) for k in 1:M.rank]) #sum of i,j th element of each 														 RankOneMatrix in Ms
 end
 
 # ╔═╡ fe6df9bf-6059-4b76-af39-385d395ece72
@@ -450,7 +465,7 @@ Base.getindex(R2, 2, 3)
 # ╔═╡ dd27f508-8503-11eb-36b9-33f5f99f78b0
 function Base.size(M::LowRankMatrix)
 	
-	return missing # Your code here
+	return size(M.Ms[1])
 end
 
 # ╔═╡ 0b7c6cbe-57de-419d-adcb-8724791f9c89
@@ -474,7 +489,7 @@ md"""
 # ╔═╡ 3fed837a-8512-11eb-1fdd-c1b72b48d07b
 function matvec(M::LowRankMatrix, x)
 	
-	return missing # Your code here
+	sum([matvec(M.Ms[k], x) for k in 1:M.rank]) #(A+B)v⃗ = Av⃗ + Bv⃗
 end
 
 # ╔═╡ 2d65bd1a-8512-11eb-1bd2-0313588dfa0e
@@ -488,9 +503,9 @@ One of the big advantages of our rank-1 matrices is its space efficiency: to "st
 # ╔═╡ f9556098-8504-11eb-08a0-39fbe00892da
 answer = md"""
 
-From rank ...
+From rank $k = n/2$
 
-Because ....
+Because for a matrix of rank $k$, our LowRankMatrix stores $k \  ×$ RankOneMatrix $= k × 2n$ entries. A dense matrix stores $n²$ entries. Therefore for $k × 2n = n², \ k = n/2$ 
 """
 
 # ╔═╡ 295acdac-880a-402e-9f7e-19b0fc801130
@@ -518,7 +533,7 @@ md"""
 """
 
 # ╔═╡ 210392ff-0a22-4e55-be08-9f58804282cf
-singular_values_of_biggie = missing
+singular_values_of_biggie = svd(biggie).S
 
 # ╔═╡ bb649c89-709c-49c8-8111-53044e8e682a
 md"""
@@ -544,21 +559,17 @@ Keep things simple. Inside your method, call `LinearAlgebra.svd` on a type that 
 
 # ╔═╡ 6c9ae344-084e-459c-841c-8377451507fd
 function LinearAlgebra.svd(A::RankOneMatrix)
-	
-	return missing
+	svd(collect(A))
 end
 
 # ╔═╡ 9ae28bc5-d9cb-479d-8c22-7c9248cd5fa0
-LinearAlgebra.svd(A)
+LinearAlgebra.svd(A).S
 
 # ╔═╡ 0cf29d7e-bd83-4c5f-bd41-e8e7c2587188
 md"""
 #### Exercise 4.3
 👉 Look at the singular values, how many of them are approximately non-zero? Does that make sense?
 """
-
-# ╔═╡ ed4b7ea5-3266-466d-a817-7ab2cc82ac9c
-
 
 # ╔═╡ 5c6aee48-017b-49ff-af1a-a31af30a45a9
 md"""
@@ -573,7 +584,7 @@ To keep things simple, you can assume that "approximately zero" means: less than
 # ╔═╡ a2b7f0c3-488b-4ce9-aed6-b8ccddac6a57
 function numerical_rank(A::AbstractMatrix; tol=1e-5)
 	
-	return missing
+	length([i for i in svd(A).S if i > tol])
 end
 
 # ╔═╡ d3420859-d558-47cb-aaf7-d51a5e2d1f6e
@@ -593,14 +604,17 @@ md"""
 
 """
 
+# ╔═╡ e2babba0-8eb7-11eb-14ad-915cc9a31bc8
+RankOneMatrix(rand(3), rand(5))
+
 # ╔═╡ 01b12200-2e7e-4f19-96b9-5b6d6cb03233
 function k_rank_ones(k, m, n)
 	
-	return missing
+	sum([RankOneMatrix(rand(m), rand(n)) for i in 1:k])
 end
 
 # ╔═╡ e1e1067b-93ba-40df-bd09-7599538e6181
-k_rank_ones(1, 3, 3)
+k_rank_ones(60, 3, 3)
 
 # ╔═╡ 00f5bea8-b808-483a-ad70-332f521481f5
 md"""
@@ -608,17 +622,17 @@ md"""
 👉 What is the answer when $m$ and $n$ are both $≥ k$?  What if one of $m$ or $n$ is $< k$?
 """
 
+# ╔═╡ 64c88950-8eb9-11eb-377e-25b8757ed674
+@bind k Slider(1:20, default=3, show_value=true)
+
+# ╔═╡ 6c370090-8eb9-11eb-063f-af329aee54c1
+@bind m Slider(1:10, default = 5, show_value=true)
+
+# ╔═╡ 6ed26bf0-8eb9-11eb-3fde-3df243ce4860
+@bind n Slider(1:10, default = 4, show_value=true)
+
 # ╔═╡ a6bb92f9-0cb2-4fdd-8b67-f286edbbdcb6
-
-
-# ╔═╡ 57c19601-122b-414f-bc99-56f98c794e61
-
-
-# ╔═╡ 9813e9f9-9970-4a8b-b3ca-e6a699e6fda4
-
-
-# ╔═╡ c8829a12-917a-4ff4-87c9-fe2b25aaa99c
-
+numerical_rank(k_rank_ones(k, m, n))
 
 # ╔═╡ 5aabbec1-a079-4936-9cd1-9c25fe5700e6
 md"## Function library
@@ -1191,6 +1205,8 @@ bigbreak
 # ╠═ba3cb45a-8502-11eb-2141-6369b0e08807
 # ╟─92a91904-850c-11eb-010e-c58ae218f541
 # ╠═f5a95dd8-850d-11eb-2aa7-2dcb1868577f
+# ╠═9d3c0e90-8eac-11eb-2c46-01fb61ac2a49
+# ╠═912e2920-8ead-11eb-2fa1-0d35671768b5
 # ╟─dc714540-8afa-11eb-205b-7770074771c8
 # ╠═c784e02c-8502-11eb-3efa-7f4c45f4274c
 # ╠═0bab818e-8503-11eb-02b3-178098599847
@@ -1228,21 +1244,21 @@ bigbreak
 # ╠═9ae28bc5-d9cb-479d-8c22-7c9248cd5fa0
 # ╟─29db89d6-ac40-4121-b996-e083555bc5db
 # ╟─0cf29d7e-bd83-4c5f-bd41-e8e7c2587188
-# ╠═ed4b7ea5-3266-466d-a817-7ab2cc82ac9c
 # ╟─5c6aee48-017b-49ff-af1a-a31af30a45a9
 # ╠═a2b7f0c3-488b-4ce9-aed6-b8ccddac6a57
 # ╠═d3420859-d558-47cb-aaf7-d51a5e2d1f6e
 # ╠═207d2f4c-cbe8-4828-ab3f-100809bb93e9
 # ╟─2f5eadb0-4fdb-45b6-83fd-116dd4c1f9be
 # ╟─7fdc110a-a3e3-44e5-a547-b75e03e0d21e
+# ╠═e2babba0-8eb7-11eb-14ad-915cc9a31bc8
 # ╠═01b12200-2e7e-4f19-96b9-5b6d6cb03233
 # ╠═e1e1067b-93ba-40df-bd09-7599538e6181
 # ╟─1276103b-8c58-4757-ae80-5ffb7f870d09
 # ╟─00f5bea8-b808-483a-ad70-332f521481f5
+# ╠═64c88950-8eb9-11eb-377e-25b8757ed674
+# ╠═6c370090-8eb9-11eb-063f-af329aee54c1
+# ╠═6ed26bf0-8eb9-11eb-3fde-3df243ce4860
 # ╠═a6bb92f9-0cb2-4fdd-8b67-f286edbbdcb6
-# ╠═57c19601-122b-414f-bc99-56f98c794e61
-# ╠═9813e9f9-9970-4a8b-b3ca-e6a699e6fda4
-# ╠═c8829a12-917a-4ff4-87c9-fe2b25aaa99c
 # ╟─a5234680-8b02-11eb-2574-15489d0d49ea
 # ╟─5aabbec1-a079-4936-9cd1-9c25fe5700e6
 # ╟─42d6b87d-b4c3-4ccb-aceb-d1b020135f47
