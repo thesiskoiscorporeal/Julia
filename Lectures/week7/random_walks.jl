@@ -26,6 +26,9 @@ begin
     using Plots, PlutoUI, BenchmarkTools
 end
 
+# ╔═╡ b1ea2124-cb73-4c22-aeb8-26633babb08c
+using SparseArrays
+
 # ╔═╡ 3649f170-923a-11eb-321c-cf95849cc044
 html"""
 <div style="
@@ -373,25 +376,24 @@ T = $(@bind T Slider(1:10^N, show_value=true, default=1))
 
 # ╔═╡ c3026d92-4b41-4b56-a3f7-f0de1aabb611
 let
-	
 	plot(Traj[1:T+1], ratio=1, leg=false, alpha=0.5, lw=2)
 	scatter!([ Traj[1], Traj[T+1] ], c=[:red, :green])
 	
-	xlims!(minimum(first.(Traj)) - 1, maximum(first.(Traj)) + 1)
-	ylims!(minimum(last.(Traj)) - 1, maximum(last.(Traj)) + 1)
+	# xlims!(minimum(first.(Traj)) - 1, maximum(first.(Traj)) + 1)
+	# ylims!(minimum(last.(Traj)) - 1, maximum(last.(Traj)) + 1)
 	
 end
 
 # ╔═╡ baced1ac-b942-4ee3-992a-d18f1eabab44
-begin
-	plot()
+# begin
+# 	plot()
 	
-	for i in 1:250
-		plot!(trajectory(Walker3D(0,0,0), 100), leg=false, lw=2, alpha=0.5)
-	end
+# 	for i in 1:100
+# 		plot!(trajectory(Walker3D(0,0,0), 100), leg=false, lw=2, alpha=0.5)
+# 	end
 	
-	plot!()
-end
+# 	plot!()
+# end
 
 # ╔═╡ 57972a32-91e5-11eb-1d62-fbc22c494db9
 md"""
@@ -560,6 +562,9 @@ ps[t]
 # ╔═╡ 6cde6ef4-9236-11eb-219a-4d20adaf9988
 M = reduce(hcat, ps)'
 
+# ╔═╡ 12c890c7-d959-4d2b-b867-0bcd75b7f98d
+sparse(M)
+
 # ╔═╡ 7e8c1a2a-9236-11eb-20e9-57f6601f5472
 heatmap(M, yflip=true)
 
@@ -613,9 +618,9 @@ heatmap(M, yflip=true)
 # ╠═3925b772-fcc6-4f49-8b22-b546aa775e09
 # ╠═0b356233-2403-4879-9384-12f03f41fcd8
 # ╠═9d879237-66a9-4cd1-a56d-13e760124210
-# ╠═c3026d92-4b41-4b56-a3f7-f0de1aabb611
 # ╠═5e6c2d45-f215-42ce-a987-0244fac8ee5a
 # ╟─815b0501-a668-4214-8a9f-7070e0f68c76
+# ╠═c3026d92-4b41-4b56-a3f7-f0de1aabb611
 # ╠═baced1ac-b942-4ee3-992a-d18f1eabab44
 # ╟─57972a32-91e5-11eb-1d62-fbc22c494db9
 # ╟─63122dd0-91e5-11eb-34c3-b1b5c87809b8
@@ -644,4 +649,6 @@ heatmap(M, yflip=true)
 # ╠═cc7aaeea-9236-11eb-3fad-2b5ad3962ec1
 # ╠═dabb5766-9236-11eb-3be9-9b33ba5af68a
 # ╠═6cde6ef4-9236-11eb-219a-4d20adaf9988
+# ╠═b1ea2124-cb73-4c22-aeb8-26633babb08c
+# ╠═12c890c7-d959-4d2b-b867-0bcd75b7f98d
 # ╠═7e8c1a2a-9236-11eb-20e9-57f6601f5472
