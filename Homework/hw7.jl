@@ -351,7 +351,7 @@ md"""
 """
 
 # ╔═╡ 1c6aa208-04d1-11eb-0b87-cf429e6ff6d0
-@bind p_infection Slider(0:0.01:1, default=0.02, show_value=true)
+@bind p_infection Slider(0:0.001:1, default=0.02, show_value=true)
 
 # ╔═╡ 384662c5-3835-4409-9e43-d42f60490ba3
 @bind p_recover Slider(0:0.001:1, default=0.002, show_value=true)
@@ -377,17 +377,14 @@ function sir_mean_error_plot(simulations::Vector{<:NamedTuple})
 		append!(s_means, mean([sim.S[t] for sim in simulations]))
 		append!(i_means, mean([sim.I[t] for sim in simulations]))
 		append!(r_means, mean([sim.R[t] for sim in simulations]))
-	
-	global sigmas = (S = std([sim.S[t] for sim in simulations]), I = std([sim.I[t] for sim in simulations]), R = std([sim.R[t] for sim in simulations]))
 	end
 	
+	sigmas = (S = [std([sim.S[t] for sim in simulations]) for t in 1:1000], I = [std([sim.I[t] for sim in simulations]) for t in 1:1000], R = [std([sim.R[t] for sim in simulations]) for t in 1:1000])
 	
 	plot(1:1000, s_means, lw=3, c=:blue, leg=false, yerr=sigmas.S, alpha=0.2)
 	plot!(1:1000, i_means, lw=3, c=:red, yerr=sigmas.I, alpha=0.2)
 	plot!(1:1000, r_means, lw=3, c=:green, yerr=sigmas.R, alpha=0.2)
 	
-	
-
 end
 
 # ╔═╡ 9611ca24-0403-11eb-3582-b7e3bb243e62
@@ -897,7 +894,7 @@ bigbreak
 # ╟─bf6fd176-04cc-11eb-008a-2fb6ff70a9cb
 # ╠═38b1aa5a-04cf-11eb-11a2-930741fc9076
 # ╟─80e6f1e0-04b1-11eb-0d4e-475f1d80c2bb
-# ╟─9cd2bb00-04b1-11eb-1d83-a703907141a7
+# ╠═9cd2bb00-04b1-11eb-1d83-a703907141a7
 # ╟─e91873bb-08a4-4baf-bcbd-c731a87acead
 # ╟─9cf9080a-04b1-11eb-12a0-17013f2d37f5
 # ╟─95c598d4-0403-11eb-2328-0175ed564915
