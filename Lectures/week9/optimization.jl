@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.0
+# v0.14.3
 
 using Markdown
 using InteractiveUtils
@@ -11,6 +11,21 @@ macro bind(def, element)
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
         el
     end
+end
+
+# ╔═╡ 400ebe26-0dea-4cf2-8744-6c73a45cd33e
+begin
+    import Pkg
+    Pkg.activate(mktempdir())
+    Pkg.add([
+        Pkg.PackageSpec(name="PlutoUI", version="0.7"),
+        Pkg.PackageSpec(name="Plots", version="1"),
+        Pkg.PackageSpec(name="Optim", version="1"),
+        Pkg.PackageSpec(name="JuMP", version="0.21"),
+        Pkg.PackageSpec(name="Ipopt", version="0.6"),
+        Pkg.PackageSpec(name="ForwardDiff", version="0.10"),
+    ])
+    using PlutoUI, Plots, Statistics, Optim, JuMP, Ipopt, ForwardDiff
 end
 
 # ╔═╡ 945c2bf1-d7dc-42c9-93d7-fd754f8fb1d7
@@ -63,21 +78,6 @@ body {
 overflow-x: hidden;
 }
 </style>"""
-
-# ╔═╡ 400ebe26-0dea-4cf2-8744-6c73a45cd33e
-begin
-    import Pkg
-    Pkg.activate(mktempdir())
-    Pkg.add([
-        Pkg.PackageSpec(name="PlutoUI", version="0.7"),
-        Pkg.PackageSpec(name="Plots", version="1"),
-        Pkg.PackageSpec(name="Optim", version="1"),
-        Pkg.PackageSpec(name="JuMP", version="0.21"),
-        Pkg.PackageSpec(name="Ipopt", version="0.6"),
-        Pkg.PackageSpec(name="ForwardDiff", version="0.10"),
-    ])
-    using PlutoUI, Plots, Statistics, Optim, JuMP, Ipopt, ForwardDiff
-end
 
 # ╔═╡ b8d66df5-f593-40b4-8c46-3b638f9cc3e1
 TableOfContents(title="📚 Table of Contents", aside=true)
@@ -182,8 +182,25 @@ md"""
 This is even shorter, but you need to know linear algebra. But it also generalizes.
 """
 
+# ╔═╡ 4225f653-df82-4f55-80c4-3cc956e1df6a
+x
+
 # ╔═╡ e0b4c2a9-a68b-47af-bf9c-f1a9f0256fd4
 [one.(x) x]\y  # even shorter but you need to know linear algebra, but generalizes
+
+# ╔═╡ 1feac25b-b8fa-4b40-b4a9-fd61b471ef5a
+md"""
+#### ^ this is solving the equation below, but for least squares
+$\begin{bmatrix} 1 & x_1 \\ 1 & x_2 \\ \vdots & \vdots \\ 1 & x_n \end{bmatrix} \begin{bmatrix}
+b
+\\ 
+m
+\end{bmatrix} = \begin{bmatrix} y_1 \\ y_2 \\ \vdots \\ y_n \end{bmatrix}$
+
+(least squares, so actually $A^TA x = A^Tb$)
+
+
+"""
 
 # ╔═╡ 6d25e38e-c18a-48b3-8b12-b670f5a5180f
 md"""
@@ -407,7 +424,9 @@ optimize(loss, [0.0,0.0], GradientDescent(), autodiff=:forward )
 # ╠═5503b4de-0b53-4223-8ce0-5e014be3f7ab
 # ╟─05e512ca-3123-48d9-9c11-5d6e9d90ef95
 # ╟─939900b4-5327-43b4-883f-740c173c0db4
+# ╠═4225f653-df82-4f55-80c4-3cc956e1df6a
 # ╠═e0b4c2a9-a68b-47af-bf9c-f1a9f0256fd4
+# ╟─1feac25b-b8fa-4b40-b4a9-fd61b471ef5a
 # ╟─6d25e38e-c18a-48b3-8b12-b670f5a5180f
 # ╟─f291c0cb-51ee-4b30-9e07-e7cf374f809e
 # ╟─aa06a447-d6c5-48ee-9864-c1f431fe5e4b
