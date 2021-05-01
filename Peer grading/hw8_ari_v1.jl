@@ -20,9 +20,10 @@ begin
 	Pkg.add([
 			Pkg.PackageSpec(name="PlutoUI", version="0.7"), 
 			Pkg.PackageSpec(name="Plots", version="1.6-1"),
+			Pkg.PackageSpec(name="ColorSchemes"),
 			])
 
-	using Plots
+	using Plots, ColorSchemes
 	gr()
 	using PlutoUI
 end
@@ -110,8 +111,7 @@ md"""
 
 # ╔═╡ d217a4b6-12e8-11eb-29ce-53ae143a39cd
 function finite_difference_slope(f::Function, a, h=1e-3)
-	
-	return missing
+	(f(a+h) - f(a)) / h
 end
 
 # ╔═╡ f0576e48-1261-11eb-0579-0b1372565ca7
@@ -124,8 +124,9 @@ md"""
 
 # ╔═╡ cbf0a27a-12e8-11eb-379d-85550b942ceb
 function tangent_line(f, a, h)
-	
-	return missing
+	m = finite_difference_slope(f, a, h)
+	g = x -> m*(x-a) + f(a)
+	return g
 end
 
 # ╔═╡ 2b79b698-10b9-11eb-3bde-53fc1c48d5f7
@@ -150,6 +151,9 @@ zeroten = LinRange(0.0, 10.0, 300);
 
 # ╔═╡ abc54b82-10b9-11eb-1641-817e2f043d26
 @bind a_finite_diff Slider(zeroten, default=4)
+
+# ╔═╡ 55b306a2-8b43-4029-bbec-dfc20fcbedc2
+tangent_line(wavy, a_finite_diff, h_finite_diff)
 
 # ╔═╡ 3d44c264-10b9-11eb-0895-dbfc22ba0c37
 let
@@ -223,7 +227,8 @@ Using this formula, we only need to know the _value_ ``f(a)`` and the _slope_ ``
 function euler_integrate_step(fprime::Function, fa::Number, 
 		a::Number, h::Number)
 	
-	return missing
+	h * fprime(a + h) + fa
+
 end
 
 # ╔═╡ 2335cae6-112f-11eb-3c2c-254e82014567
@@ -235,10 +240,14 @@ md"""
 function euler_integrate(fprime::Function, fa::Number, 
 		T::AbstractRange)
 	
-	a0 = T[1]
-	h = step(T)
+	values = []
+
+	for a in T
+		append!(values, fa)
+		fa = euler_integrate_step(fprime, fa, a, step(T))
+	end
 	
-	return missing
+	return values
 end
 
 # ╔═╡ 4d0efa66-12c6-11eb-2027-53d34c68d5b0
@@ -257,12 +266,15 @@ euler_test = let
 end
 
 # ╔═╡ ab72fdbe-10be-11eb-3b33-eb4ab41730d6
-@bind N_euler Slider(2:40)
+@bind N_euler Slider(2:400)
+
+# ╔═╡ e49213e9-c22a-4e11-93b9-892c838d5431
+@bind h_euler Slider(0.01:0.01:0.3)
 
 # ╔═╡ 990236e0-10be-11eb-333a-d3080a224d34
 let
 	a = 1
-	h = .3
+	h = h_euler
 	history = euler_integrate(wavy_deriv, wavy(a), range(a; step=h, length=N_euler))
 	
 	slope = wavy_deriv(a_euler)
@@ -336,10 +348,14 @@ r(t+h) &= r(t) + h\,\cdot \gamma i(t)
 function euler_SIR_step(β, γ, sir_0::Vector, h::Number)
 	s, i, r = sir_0
 	
+	s₂ = s - h * β * s * i
+	i₂ = i + h * ( β * s * i - γ * i )
+	r₂ = r + h * γ * i
+	
 	return [
-		missing,
-		missing,
-		missing,
+		s₂,
+		i₂,
+		r₂,
 	]
 end
 
@@ -357,21 +373,22 @@ You should return a vector of vectors: a 3-element vector for each point in time
 
 # ╔═╡ 51a0138a-1244-11eb-239f-a7413e2e44e4
 function euler_SIR(β, γ, sir_0::Vector, T::AbstractRange)
-	# T is a range, you get the step size and number of steps like so:
-	h = step(T)
+		
+	values = []
+	sir = sir_0
+
+	for a in T
+		append!(values, [sir]
+		)
+		sir = euler_SIR_step(β, γ, sir, step(T))
+	end
 	
-	num_steps = length(T)
+	return values
 	
-	return missing
 end
 
 # ╔═╡ 4b791b76-12cd-11eb-1260-039c938f5443
 sir_T = 0 : 0.1 : 60.0
-
-# ╔═╡ 0a095a94-1245-11eb-001a-b908128532aa
-sir_results = euler_SIR(0.3, 0.15, 
-	[0.99, 0.01, 0.00], 
-	sir_T)
 
 # ╔═╡ 51c9a25e-1244-11eb-014f-0bcce2273cee
 md"""
@@ -391,9 +408,6 @@ function plot_sir!(p, T, results; label="", kwargs...)
 	p
 end
 
-# ╔═╡ 58675b3c-1245-11eb-3548-c9cb8a6b3188
-plot_sir!(plot(), sir_T, sir_results)
-
 # ╔═╡ 586d0352-1245-11eb-2504-05d0aa2352c6
 md"""
 👉 Do you see an epidemic outbreak (i.e. a rapid growth in number of infected individuals, followed by a decline)? What happens after a long time? Does everybody get infected?
@@ -401,7 +415,7 @@ md"""
 
 # ╔═╡ 589b2b4c-1245-11eb-1ec7-693c6bda97c4
 default_SIR_parameters_observation = md"""
-_your answer here_
+Yes, I see the outbreak. The steady-state after a long time does not include everyone getting infected.
 """
 
 # ╔═╡ 58b45a0e-1245-11eb-04d1-23a1f3a0f242
@@ -410,7 +424,23 @@ md"""
 """
 
 # ╔═╡ 68274534-1103-11eb-0d62-f1acb57721bc
+@bind sir_β Slider(0.05:0.05:0.95, default=0.3, show_value=true)
 
+# ╔═╡ 03351dbd-9c6d-4083-9660-37c4c82b792e
+@bind sir_γ Slider(0.05:0.05:0.95, default=0.15, show_value=true)
+
+# ╔═╡ 0a095a94-1245-11eb-001a-b908128532aa
+sir_results = euler_SIR(sir_β, sir_γ, 
+	[0.99, 0.01, 0.00], 
+	sir_T)
+
+# ╔═╡ 58675b3c-1245-11eb-3548-c9cb8a6b3188
+plot_sir!(plot(), sir_T, sir_results)
+
+# ╔═╡ 7ead930e-ead6-4d9d-82c8-5976c5f662ce
+md"""
+β needs to be larger than γ for an outbreak.
+"""
 
 # ╔═╡ 82539bbe-106e-11eb-0e9e-170dfa6a7dad
 md"""
@@ -433,8 +463,7 @@ You should use **anonymous functions** for this. These have the form `x -> x^2`,
 
 # ╔═╡ bd8522c6-12e8-11eb-306c-c764f78486ef
 function ∂x(f::Function, a, b)
-	
-	return missing
+	finite_difference_slope(x -> f(x, b), a)
 end
 
 # ╔═╡ 321964ac-126d-11eb-0a04-0d3e3fb9b17c
@@ -445,8 +474,7 @@ end
 
 # ╔═╡ b7d3aa8c-12e8-11eb-3430-ff5d7df6a122
 function ∂y(f::Function, a, b)
-	
-	return missing
+	finite_difference_slope(y -> f(a, y), b)	
 end
 
 # ╔═╡ a15509ee-126c-11eb-1fa3-cdda55a47fcb
@@ -463,8 +491,7 @@ md"""
 
 # ╔═╡ adbf65fe-12e8-11eb-04e9-3d763ba91a63
 function gradient(f::Function, a, b)
-	
-	return missing
+	[∂x(f, a, b), ∂y(f, a, b)]
 end
 
 # ╔═╡ 66b8e15e-126c-11eb-095e-39c2f6abc81d
@@ -491,8 +518,7 @@ We want to minimize a 1D function, i.e. a function $f: \mathbb{R} \to \mathbb{R}
 
 # ╔═╡ a7f1829c-12e8-11eb-15a1-5de40ed92587
 function gradient_descent_1d_step(f, x0; η=0.01)
-	
-	return missing
+	-η * finite_difference_slope(f, x0)
 end
 
 # ╔═╡ d33271a2-12df-11eb-172a-bd5600265f49
@@ -504,7 +530,7 @@ let
 end
 
 # ╔═╡ 8ae98c74-12e0-11eb-2802-d9a544d8b7ae
-@bind N_gradient_1d Slider(0:20)
+@bind N_gradient_1d Slider(0:20, show_value=true)
 
 # ╔═╡ a53cf3f8-12e1-11eb-0b0c-2b794a7ac841
 md" ``x_0 = `` $(@bind x0_gradient_1d Slider(-3:.01:1.5, default=-1, show_value=true))"
@@ -545,8 +571,11 @@ md"""
 
 # ╔═╡ 9489009a-12e8-11eb-2fb7-97ba0bdf339c
 function gradient_descent_1d(f, x0; η=0.01, N_steps=1000)
-	
-	return missing
+	x = x0
+	for i in 1:N_steps
+		x += gradient_descent_1d_step(f, x, η=0.01)
+	end
+	return x
 end
 
 # ╔═╡ 34dc4b02-1248-11eb-26b2-5d2610cfeb41
@@ -563,7 +592,7 @@ Right now we take a fixed number of steps, even if the minimum is found quickly.
 
 # ╔═╡ ebca11d8-12c9-11eb-3dde-c546eccf40fc
 better_stopping_idea = md"""
-_your answer here_
+When the `finite_difference_slope()` is close to zero.
 """
 
 # ╔═╡ 9fd2956a-1248-11eb-266d-f558cda55702
@@ -576,18 +605,26 @@ Multivariable calculus tells us that the gradient $\nabla f(a, b)$ at a point $(
 
 # ╔═╡ 852be3c4-12e8-11eb-1bbb-5fbc0da74567
 function gradient_descent_2d_step(f, x0, y0; η=0.01)
-	
-	return missing
+	return (-η * ∂x(f, x0, y0), -η * ∂y(f, x0, y0))
 end
 
 # ╔═╡ 8a114ca8-12e8-11eb-2de6-9149d1d3bc3d
-function gradient_descent_2d(f, x0, y0; η=0.01)
+function gradient_descent_2d(f, x0, y0; η=0.1)
+	x = x0
+	y = y0
 	
-	return missing
+	N_steps=100
+	for i in 1:N_steps
+		@show δx, δy = gradient_descent_2d_step(f, x, y, η=η)
+		x += δx
+		y += δy
+	end
+	
+	return ((x, y),)
 end
 
 # ╔═╡ 4454c2b2-12e3-11eb-012c-c362c4676bf6
-@bind N_gradient_2d Slider(0:20)
+@bind N_gradient_2d Slider(0:200)
 
 # ╔═╡ 4aace1a8-12e3-11eb-3e07-b5827a2a6765
 md" ``x_0 = `` $(@bind x0_gradient_2d Slider(-4:.01:4, default=0, show_value=true))"
@@ -601,13 +638,16 @@ himmelbau(x, y) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2
 # ╔═╡ 92854562-1249-11eb-0b81-156982df1284
 gradient_descent_2d(himmelbau, 0, 0)
 
+# ╔═╡ 5b6d5e79-ba48-43c4-bb79-9f01639acd2b
+typeof(himmelbau)
+
 # ╔═╡ 7e318fea-12e7-11eb-3490-b17e0d4dbc50
 md"""
 We also prepared a 3D visualisation if you like! It's a bit slow...
 """
 
 # ╔═╡ 605aafa4-12e7-11eb-2d13-7f7db3fac439
-run_3d_visualisation = false
+run_3d_visualisation = false  # doesn't work at all
 
 # ╔═╡ 5e0f16b4-12e3-11eb-212f-e565f97adfed
 function gradient_2d_viz_3d(N_gradient_2d, x0, y0)
@@ -658,7 +698,7 @@ function gradient_2d_viz_2d(N_gradient_2d, x0, y0)
 	
 	all = [[x0, y0], history...]
 	
-	p = heatmap(-4:0.4:5, -4:0.4:4, himmelbau)
+	p = heatmap(-4:0.4:5, -4:0.4:4, himmelbau, c = :Blues_9)
 	
 	plot!(p, first.(all), last.(all), 
 		color="blue", opacity=range(.5,step=.2,length=length(all)), label=nothing)
@@ -753,8 +793,7 @@ $$\mathcal{L}(\mu, \sigma) := \sum_i [f_{\mu, \sigma}(x_i) - y_i]^2$$
 
 # ╔═╡ 2fc55daa-124f-11eb-399e-659e59148ef5
 function loss_dice(μ, σ)
-	
-	return missing
+	sum( (map(x -> gauss(x, μ, σ), dice_x) .- dice_y) .^ 2 )
 end
 
 # ╔═╡ 3a6ec2e4-124f-11eb-0f68-791475bab5cd
@@ -768,11 +807,13 @@ md"""
 
 # ╔═╡ a150fd60-124f-11eb-35d6-85104bcfd0fe
 found_μ, found_σ = let
-	
-	# your code here
-	
-	missing, missing
+
+	μ = 30
+	σ = 1
+	gradient_descent_2d(loss_dice, μ, σ, η=30)[1]
+
 end
+
 
 # ╔═╡ ac320522-124b-11eb-1552-51c2adaf2521
 let
@@ -858,7 +899,14 @@ This time, instead of comparing two vectors of numbers, we need to compare two v
 # ╔═╡ 754b5368-12e8-11eb-0763-e3ec56562c5f
 function loss_sir(β, γ)
 	
-	return missing
+	# starting position 0.99 S, 0.01 I, 0.00 R
+	found = euler_SIR(β, γ, [0.99, 0.01, 0.00], spatial_T)
+	found = reduce(vcat, found)
+	
+	spatial = reduce(vcat, spatial_results)
+	
+	sum( (found .- spatial) .^ 2 )
+	
 end
 
 # ╔═╡ ee20199a-12d4-11eb-1c2c-3f571bbb232e
@@ -872,9 +920,10 @@ md"""
 # ╔═╡ 6e1b5b6a-12e8-11eb-3655-fb10c4566cdc
 found_β, found_γ = let
 	
-	# your code here
-	
-	missing, missing
+	β = 0.0227
+	γ = 0.0025
+	gradient_descent_2d(loss_sir, β, γ, η=1e-67)[1]
+
 end
 
 # ╔═╡ 496b8816-12d3-11eb-3cec-c777ba81eb60
@@ -1204,6 +1253,7 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╟─bf8a4556-112b-11eb-042e-d705a2ca922a
 # ╟─0f0b7ec4-112c-11eb-3399-59e22df07355
 # ╠═cbf0a27a-12e8-11eb-379d-85550b942ceb
+# ╠═55b306a2-8b43-4029-bbec-dfc20fcbedc2
 # ╟─66198242-1262-11eb-1b0f-37c58199c754
 # ╟─abc54b82-10b9-11eb-1641-817e2f043d26
 # ╟─3d44c264-10b9-11eb-0895-dbfc22ba0c37
@@ -1224,7 +1274,8 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╟─4d0efa66-12c6-11eb-2027-53d34c68d5b0
 # ╠═b74d94b8-10bf-11eb-38c1-9f39dfcb1096
 # ╟─15b50428-1264-11eb-163e-23e2f3590502
-# ╟─ab72fdbe-10be-11eb-3b33-eb4ab41730d6
+# ╠═ab72fdbe-10be-11eb-3b33-eb4ab41730d6
+# ╠═e49213e9-c22a-4e11-93b9-892c838d5431
 # ╟─990236e0-10be-11eb-333a-d3080a224d34
 # ╟─d21fad2a-1253-11eb-304a-2bacf9064d0d
 # ╟─518fb3aa-106e-11eb-0fcd-31091a8f12db
@@ -1235,12 +1286,14 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╠═4b791b76-12cd-11eb-1260-039c938f5443
 # ╠═0a095a94-1245-11eb-001a-b908128532aa
 # ╟─51c9a25e-1244-11eb-014f-0bcce2273cee
-# ╟─58675b3c-1245-11eb-3548-c9cb8a6b3188
+# ╠═58675b3c-1245-11eb-3548-c9cb8a6b3188
 # ╟─b4bb4b3a-12ce-11eb-3fe5-ad7ccd73febb
 # ╟─586d0352-1245-11eb-2504-05d0aa2352c6
-# ╟─589b2b4c-1245-11eb-1ec7-693c6bda97c4
+# ╠═589b2b4c-1245-11eb-1ec7-693c6bda97c4
 # ╟─58b45a0e-1245-11eb-04d1-23a1f3a0f242
 # ╠═68274534-1103-11eb-0d62-f1acb57721bc
+# ╠═03351dbd-9c6d-4083-9660-37c4c82b792e
+# ╠═7ead930e-ead6-4d9d-82c8-5976c5f662ce
 # ╟─82539bbe-106e-11eb-0e9e-170dfa6a7dad
 # ╟─b394b44e-1245-11eb-2f86-8d10113e8cfc
 # ╠═bd8522c6-12e8-11eb-306c-c764f78486ef
@@ -1257,7 +1310,7 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╠═a7f1829c-12e8-11eb-15a1-5de40ed92587
 # ╠═d33271a2-12df-11eb-172a-bd5600265f49
 # ╟─ed344a8c-12df-11eb-03a3-2922620fd20f
-# ╟─8ae98c74-12e0-11eb-2802-d9a544d8b7ae
+# ╠═8ae98c74-12e0-11eb-2802-d9a544d8b7ae
 # ╟─88b30f10-12e1-11eb-383d-4f095625cd16
 # ╟─a53cf3f8-12e1-11eb-0b0c-2b794a7ac841
 # ╟─90114f98-12e0-11eb-2011-a3207bbc24f6
@@ -1272,15 +1325,16 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╠═8a114ca8-12e8-11eb-2de6-9149d1d3bc3d
 # ╠═92854562-1249-11eb-0b81-156982df1284
 # ╠═4454c2b2-12e3-11eb-012c-c362c4676bf6
-# ╟─fbb4a9a4-1248-11eb-00e2-fd346f0056db
+# ╠═fbb4a9a4-1248-11eb-00e2-fd346f0056db
 # ╟─4aace1a8-12e3-11eb-3e07-b5827a2a6765
 # ╟─54a58f84-12e3-11eb-10b9-7d55a16c81ba
 # ╠═a0045046-1248-11eb-13bd-8b8ad861b29a
+# ╠═5b6d5e79-ba48-43c4-bb79-9f01639acd2b
 # ╟─7e318fea-12e7-11eb-3490-b17e0d4dbc50
 # ╠═605aafa4-12e7-11eb-2d13-7f7db3fac439
 # ╟─9ae4ebac-12e3-11eb-0acc-23113f5264a9
-# ╠═5e0f16b4-12e3-11eb-212f-e565f97adfed
-# ╠═b6ae4d7e-12e6-11eb-1f92-c95c040d4401
+# ╟─5e0f16b4-12e3-11eb-212f-e565f97adfed
+# ╟─b6ae4d7e-12e6-11eb-1f92-c95c040d4401
 # ╟─a03890d6-1248-11eb-37ee-85b0a5273e0c
 # ╠═6d1ee93e-1103-11eb-140f-63fca63f8b06
 # ╟─8261eb92-106e-11eb-2ccc-1348f232f5c3
@@ -1308,7 +1362,7 @@ TODO = html"<span style='display: inline; font-size: 2em; color: purple; font-we
 # ╠═04364dee-12cb-11eb-2f94-bfd3fb405907
 # ╠═249c297c-12ce-11eb-2054-d1e926335148
 # ╟─c56cc19c-12ca-11eb-3c6c-7f3ea98eeb4e
-# ╟─496b8816-12d3-11eb-3cec-c777ba81eb60
+# ╠═496b8816-12d3-11eb-3cec-c777ba81eb60
 # ╟─480fde46-12d4-11eb-2dfb-1b71692c7420
 # ╟─4837e1ae-12d2-11eb-0df9-21dcc1892fc9
 # ╟─a9630d28-12d2-11eb-196b-773d8498b0bb

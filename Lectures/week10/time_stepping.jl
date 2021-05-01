@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.0
+# v0.14.4
 
 using Markdown
 using InteractiveUtils
@@ -11,6 +11,20 @@ macro bind(def, element)
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
         el
     end
+end
+
+# ╔═╡ 9a0cec14-08db-11eb-3cfa-4d1c327c63f1
+begin
+    import Pkg
+	
+    Pkg.activate(mktempdir())
+    Pkg.add([
+        Pkg.PackageSpec(name="Plots", version="1"),
+        Pkg.PackageSpec(name="PlutoUI", version="0.7"),
+        Pkg.PackageSpec(name="StatsBase", version="0.33"),
+    ])
+	
+    using Plots, PlutoUI, StatsBase, Statistics
 end
 
 # ╔═╡ 41f7d874-8cb9-11eb-308d-47dea998f6bf
@@ -63,20 +77,6 @@ body {
 overflow-x: hidden;
 }
 </style>"""
-
-# ╔═╡ 9a0cec14-08db-11eb-3cfa-4d1c327c63f1
-begin
-    import Pkg
-	
-    Pkg.activate(mktempdir())
-    Pkg.add([
-        Pkg.PackageSpec(name="Plots", version="1"),
-        Pkg.PackageSpec(name="PlutoUI", version="0.7"),
-        Pkg.PackageSpec(name="StatsBase", version="0.33"),
-    ])
-	
-    using Plots, PlutoUI, StatsBase, Statistics
-end
 
 # ╔═╡ fb6cdc08-8b44-11eb-09f5-43c167aa53fd
 PlutoUI.TableOfContents(aside=true)
@@ -450,17 +450,6 @@ md"""
 Below is an example simulation of the discrete-time model. 
 """
 
-# ╔═╡ 442035a6-0915-11eb-21de-e11cf950f230
-begin
-	ts = 1:length(SIR)
-	discrete_time_SIR_plot = plot(ts, [x.s for x in SIR], 
-		m=:o, label="S", alpha=0.2, linecolor=:blue, leg=:right, size=(400, 300))
-	plot!(ts, [x.i for x in SIR], m=:o, label="I", alpha=0.2)
-	plot!(ts, [x.r for x in SIR], m=:o, label="R", alpha=0.2)
-	
-	xlims!(0, 500)
-end
-
 # ╔═╡ d994e972-090d-11eb-1b77-6d5ddb5daeab
 begin
 	NN = 100
@@ -473,8 +462,11 @@ end
 # ╔═╡ 050bffbc-0915-11eb-2925-ad11b3f67030
 ss, ii, rr = SS/NN, II/NN, RR/NN
 
-# ╔═╡ 1d0baf98-0915-11eb-2f1e-8176d14c06ad
-p_infection, p_recovery = 0.1, 0.01
+# ╔═╡ 0e6dd95a-122d-4f32-8a15-123fd0e5bb70
+@bind p_infection Slider(0:0.01:1, default=0.1, show_value=true)
+
+# ╔═╡ 3236b7f6-bdbe-43cc-ba82-e37d2d80e430
+@bind p_recovery Slider(0:0.01:1, default=0.1, show_value=true)
 
 # ╔═╡ 28e1ec24-0915-11eb-228c-4daf9abe189b
 TT = 1000
@@ -505,6 +497,17 @@ end
 
 # ╔═╡ 39c24ef0-0915-11eb-1a0e-c56f7dd01235
 SIR = discrete_SIR(ss, ii, rr)
+
+# ╔═╡ 442035a6-0915-11eb-21de-e11cf950f230
+begin
+	ts = 1:length(SIR)
+	discrete_time_SIR_plot = plot(ts, [x.s for x in SIR], 
+		m=:o, label="S", alpha=0.2, linecolor=:blue, leg=:right, size=(400, 300))
+	plot!(ts, [x.i for x in SIR], m=:o, label="I", alpha=0.2)
+	plot!(ts, [x.r for x in SIR], m=:o, label="R", alpha=0.2)
+	
+	xlims!(0, 500)
+end
 
 # ╔═╡ 5f5d7332-b5f8-4d05-971b-ec0564f1339b
 md"""
@@ -587,7 +590,7 @@ The Julia [SciML / DifferentialEquations.jl](https://diffeq.sciml.ai/stable/tuto
 # ╟─5cec433e-ee71-44b5-b5d6-3feab80fa535
 # ╟─96b02ce7-ce16-4276-a147-ba94d7a2e160
 # ╠═d952db33-1f82-42f5-96af-8038c256715b
-# ╠═2b9276dc-fcca-4469-a62c-028a9eb3c2a9
+# ╟─2b9276dc-fcca-4469-a62c-028a9eb3c2a9
 # ╟─754fe8c1-7021-48e8-9523-d5b22d0af93f
 # ╟─ccb35ad7-db20-46fa-abff-a6e88ef999e0
 # ╟─d03d9bfc-20ea-49bc-bc7b-df22cc240ffe
@@ -607,10 +610,11 @@ The Julia [SciML / DifferentialEquations.jl](https://diffeq.sciml.ai/stable/tuto
 # ╟─72061c66-090d-11eb-14c0-df619958e2b6
 # ╟─c07367be-0987-11eb-0680-0bebd894e1be
 # ╟─f8a28ba0-0915-11eb-12d1-336f291e1d84
-# ╠═442035a6-0915-11eb-21de-e11cf950f230
+# ╟─442035a6-0915-11eb-21de-e11cf950f230
 # ╠═d994e972-090d-11eb-1b77-6d5ddb5daeab
 # ╠═050bffbc-0915-11eb-2925-ad11b3f67030
-# ╠═1d0baf98-0915-11eb-2f1e-8176d14c06ad
+# ╠═0e6dd95a-122d-4f32-8a15-123fd0e5bb70
+# ╠═3236b7f6-bdbe-43cc-ba82-e37d2d80e430
 # ╠═28e1ec24-0915-11eb-228c-4daf9abe189b
 # ╠═349eb1b6-0915-11eb-36e3-1b9459c38a95
 # ╠═39c24ef0-0915-11eb-1a0e-c56f7dd01235
